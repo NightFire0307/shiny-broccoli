@@ -60,77 +60,88 @@ class picturecopy(object):
 
     #输入订单号
     def inputNumber(self, flag):
-        number = input('请输入订单号(输入2 or Q or q 退出):')
-        if number == '2' or number == 'q' or number == 'Q':
+        self.number = input('请输入订单号(输入2 or Q or q 退出):')
+        if self.number == '2' or self.number == 'q' or self.number == 'Q':
             self.judgeUSB(self)
         else:
-            self.search(number, flag)
+            self.search(flag)
 
     #格式化盘符
-    def Format_usb(self, usbchoice):
-        os.system('format /FS:NTFS /Q {}:'.format(usbchoice))
+    def Format_usb(self):
+        os.system('format /FS:NTFS /Q {}:'.format(self.choice))
 
     #搜索精修
-    def search(self, number, flag):
+    def search(self, flag):
         for jxdir in os.listdir(self.jxpath):  # 递归查询订单号文件夹
-            if re.search(number, jxdir[0:]):
+            if re.search(self.number, jxdir[0:]):
                 print('搜索结果：{}'.format(jxdir))
-                self.get_Time(os.path.join(self.jxpath, jxdir))
-                # usbchoice = self.choiceUSB()
-                # self.Format_usb(usbchoice)
+                self.choice = self.choiceUSB()
+                self.Format_usb()
 
-                # self.createdir(usbchoice, jxdir)
-                # os.system(u'xcopy /s \"{}\\{}\" \"{}:\\{}\"'.format(self.jxpath, jxdir, usbchoice, jxdir))
-                #
-                # self.searchdp(number, usbchoice)
-                # os.rename('{}\\{}'.format(self.jxpath, jxdir), '{}\\{} {} {}'.format(self.jxpath, jxdir, flag, self.now_time))
+                self.createdir(jxdir)
+                os.system(u'xcopy /s \"{}\\{}\" \"{}:\\{}\"'.format(self.jxpath,
+                                                                    jxdir,
+                                                                    self.choice,
+                                                                    jxdir))
+
+                self.get_Time(os.path.join(self.jxpath, jxdir))
+                os.rename('{}\\{}'.format(self.jxpath, jxdir), '{}\\{} {} {}'.format(self.jxpath,
+                                                                                     jxdir,
+                                                                                     flag,
+                                                                                     self.now_time))
                 break
 
     #获取精修照片创建时间
     def get_Time(self, *args):
-        self.mon, self.day = (time.localtime(os.path.getctime(args[0])).tm_mon,
-                    time.localtime(os.path.getctime(args[0])).tm_mday)
-        self.get_zpccp_path()
+        self.mon = time.localtime(os.path.getctime(args[0])).tm_mon
+        self.start = time.clock()
+        self.is_zpccp_path()
 
-    def get_zpccp_path(self):
+    '''
+    搜索方式：通过获取照片的最后修改月份，每次向前推移一个月搜索，并且循环判断是否属于当前存储盘
+    '''
+
+    def is_zpccp_path(self):
         for dir in os.listdir(self.zpccp_path):
-            if re.search(str(self.mon), dir):
-                self.dppath = os.path.join(self.zpccp_path, os.path.join(dir, str(self.day)))
-                print(self.dppath)
-            else:
-                self.get_zpcp_path()
+            if re.match(str(self.mon), dir):
+                if self.searchdp(self.zpccp_path, self.mon) == None:
+                    self.mon = self.mon - 1 #每次减少一个月
+                    self.is_zpccp_path()
+        self.is_zpcp_path()
 
-    def get_zpcp_path(self):
+    def is_zpcp_path(self):
         for dir in os.listdir(self.zpcp_path):
-            if re.search(str(self.mon), dir):
-                self.dppath = os.path.join(self.zpcp_path, os.path.join(dir, str(self.day)))
-                print(self.dppath)
+            if re.match(str(self.mon), dir):
+                self.searchdp(self.zpcp_path, self.mon)
 
     #搜索底片
-    def searchdp(self, number, usbchoice):
-        # usbchoice = picturecopy.choiceUSB(picturecopy, '')
-        newDate = int(datetime.now().strftime('%m')) #获取当前月份
-        oldDate = newDate - 3 #搜索的月份提前三个月
-        for mouth in range(oldDate, newDate):  # 递归查询底片编号
-            for dir, dir2, file in os.walk('{}\\{}月'.format(self.dppath, mouth)):
-                for name in dir2:
-                    if re.search('%s' % number, name):
-                        print('搜索结果：{}\\{}'.format(dir, name))
-                        self.createdir(usbchoice, name)
-                        os.system(u'xcopy /s \"{0}\\{1}\" \"{2}:\\{3}\"'.format(dir, name, usbchoice, name))
-                        self.wechart(number, usbchoice)
+    def searchdp(self, dppath, mounth):
+        for dir, dir2, file in os.walk('{}\\{}月'.format(dppath, mounth)):
+            for name in dir2:
+                if re.search('%s' % self.number, name):
+                    print('搜索结果：{}\\{}\n'.format(dir, name))
+
+                    self.stop = time.clock()
+                    print('搜索耗时：' + str(self.stop - self.start) + '秒')
+                    self.createdir(name)
+                    os.system(u'xcopy /s \"{0}\\{1}\" \"{2}:\\{3}\"'.format(dir,
+                                                                            name,
+                                                                            self.choice,
+                                                                            name))
+                    self.wechart()
+                    return 1
 
     #USB内建立文件夹
-    def createdir(self, usbchoice, pathname):
-        os.system('mkdir \"{}:\\{}\"'.format(usbchoice, pathname))
+    def createdir(self, pathname):
+        os.system('mkdir \"{}:\\{}\"'.format(self.choice, pathname))
 
     #复制微信喜帖
-    def wechart(self, number, usbchoice):
+    def wechart(self):
         for dir, dir1, file in os.walk(self.wechatpath):
             for name in file:
-                if re.search(number, name):
+                if re.search(self.number, name):
                     print('{}\\{}'.format(dir, name))
-                    shutil.copy('{}\\{}'.format(dir, name),'{}:\\'.format(usbchoice))
+                    shutil.copy('{}\\{}'.format(dir, name),'{}:\\'.format(self.choice))
 
 if __name__ == '__main__':
     p = picturecopy()
