@@ -1,13 +1,6 @@
 # -*- coding:utf-8 -*-
 #Create By：Mr.Thunder
-#Power By:Abnegate
-#Version: V2.2 Beta
-#1、增加Flag标记区分
-#2、增加微信喜帖复制
-#3、代码逻辑优化
-#4、增加判断底片月份逻辑
-#5、移除S店
-#6、格式化U盘 NTFS
+#Power By: Abnegate and Elly
 
 import os
 import re
