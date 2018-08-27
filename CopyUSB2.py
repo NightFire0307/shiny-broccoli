@@ -28,7 +28,7 @@ class picturecopy(object):
         print('\r')
 
     #选择复制类型
-    def choice(self):
+    def choice_flag(self):
         choice = input('请选择类型：\n1、1楼取件（输入1）\n2、送件（输入2）\n输入选择:')
         if choice == '1' :
             print('\n你的选择是：1楼取件')
@@ -98,6 +98,7 @@ class picturecopy(object):
         for dir in os.listdir(self.zpccp_path):
             if re.match(str(self.mon), dir):
                 if self.searchdp(self.zpccp_path, self.mon) == None:
+                    self.is_zpcp_path()
                     self.mon = self.mon - 1 #每次减少一个月
                     self.is_zpccp_path()
         self.is_zpcp_path()
@@ -140,4 +141,4 @@ if __name__ == '__main__':
     p = picturecopy()
     p.judgeUSB()
     while True:
-        p.choice()
+        p.choice_flag()
